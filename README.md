@@ -1,9 +1,22 @@
-#VM Sim for VSCPU
+# VerySimpleCPU VM Simulator
 
-Memory based input output:
-  15000-16023: Screen (32x32)
-  16024: W
-  16025: A
-  16026: S
-  16027: D
 
+## Memory-Mapped I/O
+
+
+| Address         | Description              |
+|-----------------|--------------------------|
+| `15000–16023`   | Screen (32 × 32 display) |
+| `16024`         | `W` key                  |
+| `16025`         | `A` key                  |
+| `16026`         | `S` key                  |
+| `16027`         | `D` key                  |
+
+---
+
+## Usage
+
+Run the simulator with the following command pattern:
+
+```bash
+./VerySimpleCPU_fast.py <program.asm> [mode] [options]
