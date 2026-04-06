@@ -1,6 +1,7 @@
 #!/usr/bin/python3
 """
 VerySimpleCPU Simulator - Optimized
+Drop-in replacement for VerySimpleCPU.py.
 
 Usage:
   ./VerySimpleCPU_fast.py example.asm q          # max speed, no display
@@ -106,16 +107,17 @@ def parse_asm(filename, mem_size=16384):
 # ── Key polling (evdev) ──────────────────────────────────────────────────
 # Map evdev key codes to VSCPU memory addresses
 # W/Up=16024, A/Left=16025, S/Down=16026, D/Right=16027
-KEY_MAP = {}  # filled at runtime after ecodes is available
+if keyboard_avaliable:
+    KEY_MAP = {}  # filled at runtime after ecodes is available
 
-def init_key_map():
-    global KEY_MAP
-    KEY_MAP = {
-        ecodes.KEY_W: 16024,     ecodes.KEY_UP: 16024,
-        ecodes.KEY_A: 16025,     ecodes.KEY_LEFT: 16025,
-        ecodes.KEY_S: 16026,     ecodes.KEY_DOWN: 16026,
-        ecodes.KEY_D: 16027,     ecodes.KEY_RIGHT: 16027,
-    }
+    def init_key_map():
+        global KEY_MAP
+        KEY_MAP = {
+            ecodes.KEY_W: 16024,     ecodes.KEY_UP: 16024,
+            ecodes.KEY_A: 16025,     ecodes.KEY_LEFT: 16025,
+            ecodes.KEY_S: 16026,     ecodes.KEY_DOWN: 16026,
+            ecodes.KEY_D: 16027,     ecodes.KEY_RIGHT: 16027,
+        }
 
 if keyboard_avaliable:
     def poll_keyboard(keyboard, M):
@@ -148,7 +150,8 @@ def run_fast(mem, max_cycles=0, verbose=False, step_mode=False,
     keyboard = None
     screen_buf = None
     if vm_enabled:
-        init_key_map()
+        if keyboard_avaliable:
+            init_key_map()
         screen_buf = np.zeros((32, 32), dtype=np.uint8)
         # Init keys to "not pressed"
         M[16024] = 1; M[16025] = 1; M[16026] = 1; M[16027] = 1
