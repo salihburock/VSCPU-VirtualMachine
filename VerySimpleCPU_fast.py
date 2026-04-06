@@ -1,7 +1,6 @@
 #!/usr/bin/python3
 """
 VerySimpleCPU Simulator - Optimized
-Drop-in replacement for VerySimpleCPU.py.
 
 Usage:
   ./VerySimpleCPU_fast.py example.asm q          # max speed, no display
@@ -19,7 +18,13 @@ VM_AVAILABLE = False
 try:
     import cv2
     import numpy as np
-    from evdev import InputDevice, ecodes
+    try:
+        from evdev import InputDevice, ecodes
+        keyboard_avaliable = True
+
+    except:
+        pass
+        keyboard_avaliable = False
     VM_AVAILABLE = True
 except ImportError:
     pass
@@ -54,8 +59,8 @@ def click_event(event, x, y, flags, param):
             key_pressed="s"
         else:
             key_pressed="d"
-        print(f"Click detected at: x={x}, y={y}")
-        print(key_pressed)
+        # print(f"Click detected at: x={x}, y={y}")
+        # print(key_pressed)
 # ── Parser ───────────────────────────────────────────────────────────────
 def parse_asm(filename, mem_size=16384):
     mem = [0] * mem_size
@@ -112,23 +117,24 @@ def init_key_map():
         ecodes.KEY_D: 16027,     ecodes.KEY_RIGHT: 16027,
     }
 
-def poll_keyboard(keyboard, M):
-    """Read all pending keyboard events and update memory. Fast, non-blocking."""
-    r, _, _ = select.select([keyboard.fd], [], [], 0)
-    if not r:
-        return
-    try:
-        for event in keyboard.read():
-            if event.type == ecodes.EV_KEY:
-                addr = KEY_MAP.get(event.code)
-                if addr is not None:
-                    if event.value == 1:    # press
-                        M[addr] = 0
-                    elif event.value == 0:  # release
-                        M[addr] = 1
-                    # value==2 is repeat, ignore
-    except (BlockingIOError, OSError):
-        pass
+if keyboard_avaliable:
+    def poll_keyboard(keyboard, M):
+        """Read all pending keyboard events and update memory. Fast, non-blocking."""
+        r, _, _ = select.select([keyboard.fd], [], [], 0)
+        if not r:
+            return
+        try:
+            for event in keyboard.read():
+                if event.type == ecodes.EV_KEY:
+                    addr = KEY_MAP.get(event.code)
+                    if addr is not None:
+                        if event.value == 1:    # press
+                            M[addr] = 0
+                        elif event.value == 0:  # release
+                            M[addr] = 1
+                        # value==2 is repeat, ignore
+        except (BlockingIOError, OSError):
+            pass
 
 # ── Simulation ───────────────────────────────────────────────────────────
 def run_fast(mem, max_cycles=0, verbose=False, step_mode=False,
@@ -147,7 +153,8 @@ def run_fast(mem, max_cycles=0, verbose=False, step_mode=False,
         # Init keys to "not pressed"
         M[16024] = 1; M[16025] = 1; M[16026] = 1; M[16027] = 1
         try:
-            keyboard = InputDevice('/dev/input/event3')
+            if keyboard_avaliable:
+                keyboard = InputDevice('/dev/input/event3')
             print(f"Keyboard: {keyboard.name}")
         except Exception as e:
             print(f"Warning: keyboard: {e}")
@@ -233,7 +240,7 @@ def run_fast(mem, max_cycles=0, verbose=False, step_mode=False,
         # ── VM: keyboard + screen ────────────────────────────────────
         if vm_enabled:
             # Poll keyboard every cycle (like original)
-            if keyboard:
+            if keyboard and keyboard_avaliable:
                 poll_keyboard(keyboard, M)
 
             # Screen refresh throttled
