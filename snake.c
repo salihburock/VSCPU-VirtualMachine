@@ -46,8 +46,8 @@ int main() {
     snake_x[1] = 14; snake_y[1] = 15; 
     snake_x[2] = 13; snake_y[2] = 15; 
 
-    dir = 2;      
-    next_dir = 2; 
+    dir = 1;      
+    next_dir = 1; 
 
     /* Draw the initial snake */
     for (i = 0; i < length; i = i + 1) {
